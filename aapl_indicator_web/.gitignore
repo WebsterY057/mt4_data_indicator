@@ -12,3 +12,11 @@ logs/
 *.duckdb
 *.log
 *.pid
+
+!data/
+data/*
+!data/binance_aapl_tokenized_20260713_20260813.db
+!data/okx_btc_history_20260713_20260813.db
+!data/samples/
+data/samples/*
+!data/samples/dukascopy_xauusd_20260813.sqlite
