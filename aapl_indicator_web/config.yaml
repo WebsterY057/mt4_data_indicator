@@ -1,0 +1,113 @@
+server:
+  host: "0.0.0.0"
+  port: 5011
+
+remote:
+  host: "192.168.1.130"
+  user: "yw123"
+  python: "python3"
+  password_env: "AAPL_VIS_REMOTE_PASSWORD"
+  duckdb_path: "/home/yw123/jobs/ibkr_aapl_l1_v1/output/full_20260801_20260810/ibkr_us_equity.duckdb"
+
+boards:
+  us_equity:
+    label: "美股"
+    symbol: "AAPL"
+    source_label: "IBKR · US EQUITY · L1 TRADE"
+    backend: "remote_duckdb"
+    tables:
+      1m: "research.aapl_trade_bars_1m"
+      5m: "research.aapl_trade_bars_5m"
+    date_start: "2026-08-01"
+    date_end: "2026-08-10"
+    max_points: 50000
+  tokenized_equity:
+    label: "代币化美股"
+    symbol: "AAPLUSDT"
+    source_label: "BINANCE · TRADIFI PERPETUAL"
+    backend: "okx_sqlite"
+    sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/binance_aapl_tokenized_20260713_20260813.db"
+    tables:
+      1m: "klines_1m"
+      5m: "klines_5m"
+    date_start: "2026-07-13"
+    date_end: "2026-08-13"
+    max_points: 50000
+  crypto:
+    label: "加密货币"
+    symbol: "BTC-USDT"
+    source_label: "OKX · CRYPTO · HISTORICAL CANDLES"
+    backend: "okx_sqlite"
+    sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/okx_btc_history_20260713_20260813.db"
+    tables:
+      1m: "klines_1m"
+      5m: "klines_5m"
+    date_start: "2026-07-13"
+    date_end: "2026-08-13"
+    max_points: 50000
+  forex:
+    label: "外汇"
+    symbol: "XAUUSD"
+    source_label: "DUKASCOPY · FOREX · TICK"
+    backend: "local_sqlite"
+    sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/dukascopy_xauusd_20260713_20260813/dukascopy_xauusd_ticks.sqlite"
+    tables:
+      1m: "bars_1m"
+      5m: "bars_5m"
+    date_start: "2026-07-13"
+    date_end: "2026-08-13"
+    max_points: 40000
+
+data:
+  default_board: "us_equity"
+  default_interval: "5m"
+
+indicators:
+  heiken_ashi:
+    ma1_method: "SMMA"
+    ma1_period: 6
+    ma2_method: "LWMA"
+    ma2_period: 2
+  zigzag:
+    price_tick_size: 0.01
+    show_unconfirmed: true
+    live_reversal_percent: 0.1
+    live_reversal_abs: 0.0
+    intervals:
+      1m:
+        depth: 30
+        deviation: 5
+        backstep: 3
+      1m_display_fast:
+        depth: 12
+        deviation: 5
+        backstep: 3
+      5m:
+        depth: 12
+        deviation: 5
+        backstep: 3
+  parabolic_sar:
+    step: 0.016
+    maximum: 0.2
+  sanqing:
+    basis_source: "typical_price"
+    basis_method: "EMA"
+    basis_period: 13
+    atr_method: "Wilder_RMA"
+    atr_period: 14
+    atr_multiplier: 0.50
+    breakout_reference: "previous_closed_bar"
+  entry_filter:
+    timezone: "Asia/Shanghai"
+    max_move_from_parabolic_turn_percent: 0.30
+    blackout_windows:
+      - start: "20:00"
+        end: "21:00"
+        reason: "20:30 重要数据发布前后半小时"
+
+backtest:
+  notional_per_trade_usd: 10.0
+  fee_rate_per_side: 0.0
+  slippage_rate_per_side: 0.0
+  volume_basis: "entry_plus_exit_notional"
+  open_position_valuation: "excluded"

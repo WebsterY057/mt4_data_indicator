@@ -1,0 +1,15 @@
+inst_id: "AAPL-USDT-SWAP"
+okx_ws_url: "wss://ws.okx.com:8443/ws/v5/public"
+sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/okx_aapl_tokenized.db"
+intervals:
+  1m: 60000
+  5m: 300000
+reconnect_initial_seconds: 1
+reconnect_max_seconds: 30
+history:
+  rest_url: "https://www.okx.com/api/v5/market/history-candles"
+  date_start: "2026-07-07"
+  date_end: "2026-08-07"
+  bar: "1m"
+  page_limit: 100
+  request_interval_seconds: 0.12

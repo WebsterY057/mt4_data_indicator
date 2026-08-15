@@ -1,0 +1,24 @@
+symbol: XAUUSD
+start_date_utc: "2026-07-13"
+end_date_utc_exclusive: "2026-08-14"
+
+market_hours:
+  friday_close_hour_utc: 21
+  sunday_open_hour_utc: 22
+  daily_closed_hours_utc: [21]
+
+download:
+  base_url: "https://datafeed.dukascopy.com/datafeed"
+  timeout_seconds: 30
+  retries: 3
+  retry_sleep_seconds: 2
+  verify_tls: true
+
+decode:
+  price_scale: 1000
+
+output:
+  output_dir: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/dukascopy_xauusd_20260713_20260813"
+  sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/dukascopy_xauusd_20260713_20260813/dukascopy_xauusd_ticks.sqlite"
+  keep_raw_bi5: false
+  batch_insert_rows: 50000

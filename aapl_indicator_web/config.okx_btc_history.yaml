@@ -1,0 +1,9 @@
+inst_id: "BTC-USDT"
+sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/okx_btc_history_20260713_20260813.db"
+history:
+  rest_url: "https://www.okx.com/api/v5/market/history-candles"
+  date_start: "2026-07-13"
+  date_end: "2026-08-13"
+  bar: "1m"
+  page_limit: 100
+  request_interval_seconds: 0.12

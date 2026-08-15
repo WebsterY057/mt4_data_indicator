@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+
+data/
+logs/
+
+*.db
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.duckdb
+*.log
+*.pid

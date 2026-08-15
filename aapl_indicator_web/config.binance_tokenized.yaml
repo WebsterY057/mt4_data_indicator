@@ -1,0 +1,9 @@
+inst_id: "AAPLUSDT"
+sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/binance_aapl_tokenized_20260713_20260813.db"
+history:
+  rest_url: "https://fapi.binance.com/fapi/v1/klines"
+  date_start: "2026-07-13"
+  date_end: "2026-08-13"
+  interval: "1m"
+  page_limit: 1500
+  request_interval_seconds: 0.10
