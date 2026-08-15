@@ -95,7 +95,7 @@ indicators:
     basis_period: 13
     atr_method: "Wilder_RMA"
     atr_period: 14
-    atr_multiplier: 0.50
+    atr_multiplier: 0.45
     breakout_reference: "previous_closed_bar"
   entry_filter:
     timezone: "Asia/Shanghai"
