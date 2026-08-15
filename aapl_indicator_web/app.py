@@ -232,6 +232,26 @@ def okx_sqlite_bars(board: dict[str, Any], interval: str, date_start: str, date_
             "rows": [dict(zip(columns, row)) for row in rows]}
 
 
+def ashare_sqlite_bars(board: dict[str, Any], interval: str, date_start: str, date_end: str) -> dict[str, Any]:
+    table = board["tables"][interval]
+    uri = f"file:{Path(board['sqlite_path']).expanduser()}?mode=ro"
+    con = sqlite3.connect(uri, uri=True)
+    try:
+        params = [board["symbol_code"], date_start, date_end]
+        where = "symbol = ? AND substr(bar_time, 1, 10) BETWEEN ? AND ?"
+        total = int(con.execute(f"SELECT count(*) FROM {table} WHERE {where}", params).fetchone()[0])
+        rows = con.execute(
+            f"SELECT start_ts, end_ts, open, high, low, close, volume, 0 FROM {table} "
+            f"WHERE {where} ORDER BY start_ts", params
+        ).fetchall()
+    finally:
+        con.close()
+    columns = ["start_ts", "end_ts", "open", "high", "low", "close", "volume", "trade_count"]
+    return {"interval": interval, "date_start": date_start, "date_end": date_end,
+            "total_rows": total, "stride": 1, "columns": columns,
+            "rows": [dict(zip(columns, row)) for row in rows]}
+
+
 @app.get("/api/bars")
 def bars():
     board_key = request.args.get("board", CONFIG["data"]["default_board"])
@@ -244,7 +264,12 @@ def bars():
     if board["backend"] == "unconfigured":
         return jsonify({"ok": False, "error": "未找到已保存的 OKX 代币化美股行情；现有 OKX 实时库只包含 BTC-USDT"}), 503
     if interval not in board.get("tables", {}):
-        return jsonify({"ok": False, "error": "interval must be 1m or 5m"}), 400
+        return jsonify({"ok": False, "error": "interval is not available for this board"}), 400
+    if board["backend"] == "ashare_sqlite":
+        try:
+            return jsonify({"ok": True, **ashare_sqlite_bars(board, interval, date_start, date_end)})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500
     if board["backend"] == "local_sqlite":
         try:
             return jsonify({"ok": True, **local_sqlite_bars(board, interval, date_start, date_end)})

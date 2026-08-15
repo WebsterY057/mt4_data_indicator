@@ -1,0 +1,23 @@
+source:
+  name: "Sina CN MarketDataService"
+  endpoint: "https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20_data=/CN_MarketDataService.getKLineData"
+  provider_symbol: "sh600879"
+  symbol: "600879.SH"
+  name_cn: "航天电子"
+  adjustment: "none"
+  volume_unit: "share"
+output:
+  sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/aerospace_electronics_600879_1h_1y_1d_3y_20260815.db"
+datasets:
+  1h:
+    scale: 60
+    datalen: 1100
+    table: "bars_1h"
+    start: "2025-08-15"
+    end: "2026-08-15"
+  1d:
+    scale: 240
+    datalen: 800
+    table: "daily_bars"
+    start: "2023-08-15"
+    end: "2026-08-15"

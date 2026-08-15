@@ -48,6 +48,8 @@
     .profit-positive { color:#28c76f; } .profit-negative { color:#ff5c5c; }
     .charts-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; }
     .chart-card { border: 1px solid #243241; background: #111a24; margin-top: 12px; }
+    .chart-card.full-width { grid-column: 1 / -1; }
+    .chart-card[hidden], .trend-controls[hidden] { display:none; }
     .chart-header { display: flex; justify-content: space-between; padding: 12px 16px 0; font-size: 14px; }
     .chart-header span:last-child { color: #8b9bab; }
     .chart { height: 520px; width: 100%; }
@@ -68,18 +70,26 @@
       <label>结束日期<input id="date-end" type="date"></label>
       <button id="load" type="button">重新加载</button>
     </header>
-    <section class="indicator-strip">MT4 指标映射<strong>HA SMMA6/LWMA2 · ZigZag 确认时间可见：1m 主线 D30 Dev5 B3 · 1m 白色辅助线 D12 Dev5 B3 · 5m D12 Dev5 B3 · SAR 0.016/0.2</strong><br>5m 区间依据<strong>向下 ZigZag：新低＜前低做空，新低＞前低做多 · 向上 ZigZag：新高＜前高做空，新高＞前高做多 · 无同类前点时空白</strong></section>
+    <section class="indicator-strip">MT4 指标映射<strong>HA SMMA6/LWMA2 · ZigZag 确认时间可见：1h 主线 D30 Dev5 B3 + 白色虚线 D12 Dev5 B3 · 1d D12 Dev5 B3 · 1m 主线 D30 Dev5 B3 + 白色虚线 D12 Dev5 B3 · 5m D12 Dev5 B3 · SAR 0.016/0.2</strong><br>5m 区间依据<strong>向下 ZigZag：新低＜前低做空，新低＞前低做多 · 向上 ZigZag：新高＜前高做空，新高＞前高做多 · 无同类前点时空白</strong></section>
     <section id="sanqing-controls" class="indicator-controls" aria-label="三清线指标显示"><span>1m / 5m 三清线</span><label><input id="show-sanqing" type="checkbox" checked>显示三清线</label><label>ATR 倍数<input id="sanqing-multiplier" type="number" min="0.05" max="3.00" step="0.05" value="{{ indicator_config.sanqing.atr_multiplier }}" inputmode="decimal"></label><small>全部品种 · EMA13 中轨 · ATR14 自适应 · 突破依据上一根已收盘轨道</small></section>
     <section class="trend-controls" aria-label="趋势组合过滤"><span>趋势组合过滤</span><label><input type="checkbox" data-trend-filter="fiveZigzag">5m ZigZag</label><label><input type="checkbox" data-trend-filter="fiveHa">5m 最近5根 HA</label><label><input type="checkbox" data-trend-filter="fiveEntry">5m 最近进场点</label><label><input type="checkbox" data-trend-filter="oneZigzag">1m ZigZag</label><small id="filter-status">未选择：显示全部原始进场点</small></section>
     <div id="status" role="status"></div>
     <section id="metrics" class="metrics" aria-label="策略回测统计" hidden></section>
     <details id="trade-details" class="trade-details" hidden><summary id="trade-summary">交易明细（0 笔）</summary><div class="trade-table-wrap"><table class="trade-table"><thead><tr><th>#</th><th>方向</th><th>名义金额</th><th>进场时间</th><th>进场价</th><th>止损</th><th>止盈</th><th>出场时间</th><th>出场价</th><th>结果</th><th>盈亏</th><th>手续费</th></tr></thead><tbody id="trade-rows"></tbody></table></div></details>
     <div class="charts-grid">
-      <section class="chart-card">
+      <section id="card-1h" class="chart-card" hidden>
+        <div class="chart-header"><span>1 小时 K 线</span><span id="count-1h">0 bars</span></div>
+        <div id="chart-1h" class="chart"></div><div id="detail-1h" class="detail">移动鼠标查看 1h OHLCV 与指标</div>
+      </section>
+      <section id="card-1d" class="chart-card" hidden>
+        <div class="chart-header"><span>日 K 线</span><span id="count-1d">0 bars</span></div>
+        <div id="chart-1d" class="chart"></div><div id="detail-1d" class="detail">移动鼠标查看日线 OHLCV 与指标</div>
+      </section>
+      <section id="card-1m" class="chart-card">
         <div class="chart-header"><span>1 分钟 K 线</span><span id="count-1m">0 bars</span></div>
         <div id="chart-1m" class="chart"></div><div id="detail-1m" class="detail">移动鼠标查看 1m OHLCV 与指标</div>
       </section>
-      <section class="chart-card">
+      <section id="card-5m" class="chart-card">
         <div class="chart-header"><span>5 分钟 K 线</span><span id="count-5m">0 bars</span></div>
         <div id="chart-5m" class="chart"></div><div id="detail-5m" class="detail">移动鼠标查看 5m OHLCV 与指标</div>
       </section>
@@ -90,8 +100,8 @@ const indicatorConfig={{ indicator_config|tojson }};
 const backtestConfig={{ backtest_config|tojson }};
 const boards={{ boards|tojson }};
 let activeBoard={{ default_board|tojson }};
-const charts={"1m":echarts.init(document.getElementById('chart-1m')),"5m":echarts.init(document.getElementById('chart-5m'))};
-const zoomState={"1m":{start:98,end:100},"5m":{start:90,end:100}};
+const charts={"1d":echarts.init(document.getElementById('chart-1d')),"1h":echarts.init(document.getElementById('chart-1h')),"1m":echarts.init(document.getElementById('chart-1m')),"5m":echarts.init(document.getElementById('chart-5m'))};
+const zoomState={"1d":{start:0,end:100},"1h":{start:55,end:100},"1m":{start:98,end:100},"5m":{start:90,end:100}};
 function num(v){return Number(v)}
 function price(v){return v===null||v===undefined||Number.isNaN(num(v))?'--':num(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:4})}
 function dt(ms){const d=new Date(ms);return d.toLocaleString('zh-CN',{hour12:false})}
@@ -141,13 +151,14 @@ function buildCandidateResearch(one,five){const raw=eligibleCandidates(one,rawEn
 const candidateOptionBase=option;
 option=function(interval,bars,strategy=null){const result=candidateOptionBase(interval,bars,strategy),base=result.tooltip.formatter;result.series=result.series.filter(s=>!['实际止损','实际止盈'].includes(s.name));result.tooltip.formatter=params=>{let html=base(params),entry=params.find(x=>x.seriesName==='进场'&&x.data?.trade?.factors);if(entry){const f=entry.data.trade.factors,label=x=>x==='long'?'做多':x==='short'?'做空':'空白';html+=`<br><strong>四类趋势判断</strong><br>5m ZigZag：${label(f.fiveZigzag.direction)}｜${f.fiveZigzag.reason}<br>5m 最近5根 HA：${label(f.fiveHa.direction)}｜${f.fiveHa.reason}<br>5m 最近进场点：${label(f.fiveEntry.direction)}｜${f.fiveEntry.reason}<br>1m ZigZag：${label(f.oneZigzag.direction)}｜${f.oneZigzag.reason}`}return html};return result}
 const dualZigzagOptionBase=option;
-option=function(interval,bars,strategy=null){const result=dualZigzagOptionBase(interval,bars,strategy);if(interval==='1m')result.series.push({name:'ZigZag 12/5/3',type:'line',data:zigzag(bars,'1m_display_fast'),connectNulls:false,showSymbol:false,sampling:'lttb',lineStyle:{color:'#ffffff',width:1.6,type:'dashed',opacity:.9},z:4});return result}
+option=function(interval,bars,strategy=null){const result=dualZigzagOptionBase(interval,bars,strategy),fastInterval=interval==='1m'?'1m_display_fast':interval==='1h'?'1h_display_fast':null;if(fastInterval)result.series.push({name:'ZigZag 12/5/3',type:'line',data:zigzag(bars,fastInterval),connectNulls:false,showSymbol:false,sampling:'lttb',lineStyle:{color:'#ffffff',width:1.6,type:'dashed',opacity:.9},z:4});return result}
 const sanqingOptionBase=option;
 option=function(interval,bars,strategy=null){const result=sanqingOptionBase(interval,bars,strategy),visible=document.getElementById('show-sanqing')?.checked!==false;if(!visible)return result;const lines=sanqing(bars);result.series.push({name:`三清线上轨 ×${lines.multiplier.toFixed(2)}`,type:'line',data:lines.upper,showSymbol:false,sampling:'lttb',lineStyle:{color:'#42d9e8',width:1.4},z:5},{name:'三清线中轨',type:'line',data:lines.middle,showSymbol:false,sampling:'lttb',lineStyle:{color:'#8d9bff',width:1.2,opacity:.9},z:5},{name:`三清线下轨 ×${lines.multiplier.toFixed(2)}`,type:'line',data:lines.lower,showSymbol:false,sampling:'lttb',lineStyle:{color:'#42d9e8',width:1.4},z:5});const base=result.tooltip.formatter;result.tooltip.formatter=params=>{let html=base(params),p=params.find(x=>x.seriesName==='OHLC');if(p){const i=p.dataIndex;html+=`<br><strong>${interval} 三清线（ATR × ${lines.multiplier.toFixed(2)}）</strong><br>上轨 ${price(lines.upper[i])} · 中轨 ${price(lines.middle[i])} · 下轨 ${price(lines.lower[i])}`;if(i>0){const close=num(bars[i].close),longBreak=close>num(lines.upper[i-1]),shortBreak=close<num(lines.lower[i-1]);html+=`<br>上一根阈值：上 ${price(lines.upper[i-1])} · 下 ${price(lines.lower[i-1])}<br>收盘突破：${longBreak?'做多上轨':shortBreak?'做空下轨':'无'}`}}return html};return result}
 function renderCandidateResearch(){if(!researchData)return;const strategy=buildCandidateResearch(researchData.one,researchData.five),fiveStrategy=mapStrategyToBars(strategy,researchData.five),names={fiveZigzag:'5m ZigZag',fiveHa:'5m 最近5根 HA',fiveEntry:'5m 最近进场点',oneZigzag:'1m ZigZag'};charts['1m'].setOption(option('1m',researchData.one,strategy),true);charts['5m'].setOption(option('5m',researchData.five,fiveStrategy),true);document.getElementById('filter-status').textContent=strategy.selected.length?`已选择：${strategy.selected.map(x=>names[x]).join(' + ')}`:'未选择：显示全部原始进场点';document.getElementById('status').textContent=`原始进场点 ${strategy.rawCount.toLocaleString()} 个；当前显示 ${strategy.entries.length.toLocaleString()} 个；已完成出场 ${strategy.exits.length.toLocaleString()} 个（SL/TP 首次触达）`}
-async function loadAll(){const s=document.getElementById('date-start').value,e=document.getElementById('date-end').value,status=document.getElementById('status');status.className='';status.textContent='正在读取数据…';try{const p=await Promise.all([loadInterval('1m',s,e),loadInterval('5m',s,e)]);researchData={one:p[0].rows,five:p[1].rows};renderCandidateResearch()}catch(err){status.className='error';status.textContent=`读取失败：${err.message}`}}
-function selectBoard(key,load=true){activeBoard=key;const b=boards[key];document.getElementById('source-label').textContent=b.source_label;document.getElementById('symbol-label').textContent=b.symbol;document.getElementById('date-start').value=b.date_start;document.getElementById('date-end').value=b.date_end;document.querySelectorAll('.board-tab').forEach(x=>x.classList.toggle('active',x.dataset.board===key));Object.values(charts).forEach(c=>c.clear());for(const i of ['1m','5m'])document.getElementById(`count-${i}`).textContent='0 bars';if(load)loadAll()}
+function renderResearch(){if(researchData?.ashare){for(const interval of ['1h','1d'])charts[interval].setOption(option(interval,researchData.ashare[interval],null),true);document.getElementById('status').textContent=`已映射 1小时 ${researchData.ashare['1h'].length.toLocaleString()} 根、日线 ${researchData.ashare['1d'].length.toLocaleString()} 根：Smoothed HA、ZigZag、Parabolic SAR、三清线`;return}renderCandidateResearch()}
+async function loadAll(){const s=document.getElementById('date-start').value,e=document.getElementById('date-end').value,status=document.getElementById('status'),intervals=boards[activeBoard].intervals||['1m','5m'];status.className='';status.textContent='正在读取数据…';try{if(intervals.includes('1h')){const p=await Promise.all(intervals.map(i=>loadInterval(i,s,e)));researchData={ashare:Object.fromEntries(intervals.map((i,k)=>[i,p[k].rows]))};renderResearch()}else{const p=await Promise.all([loadInterval('1m',s,e),loadInterval('5m',s,e)]);researchData={one:p[0].rows,five:p[1].rows};renderResearch()}}catch(err){status.className='error';status.textContent=`读取失败：${err.message}`}}
+function selectBoard(key,load=true){activeBoard=key;const b=boards[key],ashare=(b.intervals||[]).includes('1h');document.getElementById('source-label').textContent=b.source_label;document.getElementById('symbol-label').textContent=b.symbol;document.getElementById('date-start').value=b.date_start;document.getElementById('date-end').value=b.date_end;document.querySelectorAll('.board-tab').forEach(x=>x.classList.toggle('active',x.dataset.board===key));document.getElementById('card-1d').hidden=!ashare;document.getElementById('card-1h').hidden=!ashare;document.getElementById('card-1m').hidden=ashare;document.getElementById('card-5m').hidden=ashare;document.querySelector('.trend-controls').hidden=ashare;document.getElementById('sanqing-controls').querySelector('span').textContent=ashare?'1小时 / 日线三清线':'1m / 5m 三清线';Object.values(charts).forEach(c=>c.clear());for(const i of ['1d','1h','1m','5m'])document.getElementById(`count-${i}`).textContent='0 bars';setTimeout(()=>Object.values(charts).forEach(c=>c.resize()),0);if(load)loadAll()}
 document.querySelectorAll('.board-tab').forEach(x=>x.addEventListener('click',()=>selectBoard(x.dataset.board)));
-document.getElementById('load').addEventListener('click',loadAll);document.getElementById('show-sanqing').addEventListener('change',renderCandidateResearch);document.getElementById('sanqing-multiplier').addEventListener('change',renderCandidateResearch);document.querySelectorAll('[data-trend-filter]').forEach(x=>x.addEventListener('change',renderCandidateResearch));window.addEventListener('resize',()=>Object.values(charts).forEach(c=>c.resize()));selectBoard(activeBoard);
+document.getElementById('load').addEventListener('click',loadAll);document.getElementById('show-sanqing').addEventListener('change',renderResearch);document.getElementById('sanqing-multiplier').addEventListener('change',renderResearch);document.querySelectorAll('[data-trend-filter]').forEach(x=>x.addEventListener('change',renderResearch));window.addEventListener('resize',()=>Object.values(charts).forEach(c=>c.resize()));selectBoard(activeBoard);
 </script>
 </body></html>
