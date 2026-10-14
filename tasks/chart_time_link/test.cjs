@@ -1,0 +1,33 @@
+const assert=require('node:assert/strict');
+const {overlappingRange,centeredWindow,install}=require('../../aapl_indicator_web/static/chart-time-link.js');
+const make=(step,count)=>Array.from({length:count},(_,i)=>({start_ts:i*step,end_ts:(i+1)*step}));
+const one=make(60,30),five=make(300,6),fifteen=make(900,2);
+assert.deepEqual(overlappingRange(five,240,300),[0,0]);
+assert.deepEqual(overlappingRange(five,300,360),[1,1]);
+assert.deepEqual(overlappingRange(one,300,600),[5,9]);
+assert.deepEqual(overlappingRange(one,900,1800),[15,29]);
+assert.equal(overlappingRange(one,1800,1860),null);
+assert.equal(overlappingRange([{start_ts:0,end_ts:60},{start_ts:120,end_ts:180}],60,120),null);
+assert.deepEqual(centeredWindow(30,25,29,10),[20,29]);
+const elements=new Map();global.document={getElementById:id=>elements.get(id),createElement:()=>({setAttribute(){}})};
+const data={'1m':one,'5m':five,'15m':fifteen},charts={};
+for(const interval of Object.keys(data)){
+  elements.set(`card-${interval}`,{appendChild(el){elements.set(el.id,el)}});
+  charts[interval]={events:{},actions:[],markers:null,getZr(){return {on:(name,fn)=>this.events[name]=fn}},on(){},setOption(o){this.markers=o.series},getOption(){return {dataZoom:[{start:0,end:100}]}},dispatchAction(a){this.actions.push(a)}};
+}
+const link=install({charts,getBars:i=>data[i],isVisible:()=>true,formatTime:String,onZoom(){},settings:{enabled:true,intervals:Object.keys(data),line_color:'red',line_width:2,area_color:'pink',minimum_visible_bars:3,maximum_visible_bars:30}});
+link.select('5m',1);
+assert.deepEqual(charts['1m'].markers[0].markLine.data.map(p=>p.xAxis),[5,9]);
+assert.deepEqual(charts['15m'].markers[0].markLine.data.map(p=>p.xAxis),[0]);
+assert.equal(charts['1m'].actions.length,1);
+link.select('1m',5);
+assert.deepEqual(charts['5m'].markers[0].markLine.data.map(p=>p.xAxis),[1]);
+assert.equal(charts['1m'].markers[0].markLine.data.length,1);
+link.select('15m',1);
+assert.deepEqual(charts['1m'].markers[0].markLine.data.map(p=>p.xAxis),[15,29]);
+assert.deepEqual(charts['5m'].markers[0].markLine.data.map(p=>p.xAxis),[3,5]);
+assert.deepEqual(charts['15m'].markers[0].markLine.data.map(p=>p.xAxis),[1]);
+data['1m']=make(60,30);
+data['15m']=make(900,2);
+assert.equal(link.decorateOption('5m',five,{series:[],legend:{}}).series[0].markLine.data.length,0);
+console.log('PASS: half-open boundaries, gaps, cross-period ranges, navigation and stale-selection reset');

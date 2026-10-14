@@ -9,7 +9,18 @@ PID_FILE="$LOG_DIR/server_${PORT}.pid"
 LOG_FILE="$LOG_DIR/server_${PORT}.log"
 PYTHON_BIN="${AAPL_VIS_PYTHON:-/Users/yy/Documents/Codex/单因子回测架构/.venv_price_curves/bin/python}"
 
-if [[ -z "${AAPL_VIS_REMOTE_PASSWORD:-}" ]]; then
+NEEDS_REMOTE="$($PYTHON_BIN - "$ROOT_DIR/config.yaml" <<'PY'
+import sys
+import yaml
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    config = yaml.safe_load(handle) or {}
+boards = config.get("boards", {})
+print("1" if any(board.get("backend") == "remote_duckdb" for board in boards.values()) else "0")
+PY
+)"
+
+if [[ "$NEEDS_REMOTE" == "1" && -z "${AAPL_VIS_REMOTE_PASSWORD:-}" ]]; then
   printf "SSH password: "
   IFS= read -r -s AAPL_VIS_REMOTE_PASSWORD </dev/tty
   printf "\n"

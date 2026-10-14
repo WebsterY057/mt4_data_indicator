@@ -1,0 +1,25 @@
+interval:
+  label: "15m"
+  milliseconds: 900000
+
+databases:
+  - name: "IBKR AAPL"
+    profile: "generic_klines"
+    path: "data/ibkr_aapl_20260713_20260813.sqlite"
+    source_table: "klines_1m"
+    target_table: "klines_15m"
+  - name: "Binance AAPLUSDT perpetual"
+    profile: "generic_klines"
+    path: "data/binance_aapl_tokenized_20260713_20260813.db"
+    source_table: "klines_1m"
+    target_table: "klines_15m"
+  - name: "OKX BTC-USDT"
+    profile: "generic_klines"
+    path: "data/okx_btc_history_20260713_20260813.db"
+    source_table: "klines_1m"
+    target_table: "klines_15m"
+  - name: "Dukascopy XAUUSD"
+    profile: "dukascopy_bars"
+    path: "data/dukascopy_xauusd_20260713_20260813/dukascopy_xauusd_ticks.sqlite"
+    source_table: "bars_1m"
+    target_table: "bars_15m"

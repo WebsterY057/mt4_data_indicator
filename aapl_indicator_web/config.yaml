@@ -1,93 +1,69 @@
 server:
-  host: "0.0.0.0"
+  host: 0.0.0.0
   port: 5011
-
 remote:
-  host: "192.168.1.130"
-  user: "yw123"
-  python: "python3"
-  password_env: "AAPL_VIS_REMOTE_PASSWORD"
-  duckdb_path: "/home/yw123/jobs/ibkr_aapl_l1_v1/output/full_20260801_20260810/ibkr_us_equity.duckdb"
-
+  host: 192.168.1.130
+  user: yw123
+  python: python3
+  password_env: AAPL_VIS_REMOTE_PASSWORD
+  duckdb_path: /home/yw123/jobs/ibkr_aapl_l1_v1/output/full_20260801_20260810/ibkr_us_equity.duckdb
 boards:
-  ashare_daily:
-    label: "A股"
-    symbol: "航天电子 · 600879.SH"
-    symbol_code: "600879.SH"
-    source_label: "新浪财经 · 上交所 A 股 · 1小时近一年 / 日线近三年 · 不复权 · 成交量单位：股"
-    backend: "ashare_sqlite"
-    sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/aerospace_electronics_600879_1h_1y_1d_3y_20260815.db"
-    tables:
-      1h: "bars_1h"
-      1d: "daily_bars"
-    intervals: ["1h", "1d"]
-    date_start: "2023-08-15"
-    date_end: "2026-08-15"
-    max_points: 1000
-  us_equity:
-    label: "美股"
-    symbol: "AAPL"
-    source_label: "IBKR · US EQUITY · LOCAL SQLITE"
-    backend: "okx_sqlite"
-    sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/ibkr_aapl_20260713_20260813.sqlite"
-    tables:
-      1m: "klines_1m"
-      5m: "klines_5m"
-    intervals: ["1m", "5m"]
-    date_start: "2026-07-13"
-    date_end: "2026-08-13"
-    max_points: 50000
   tokenized_equity:
-    label: "代币化美股"
-    symbol: "AAPLUSDT"
-    source_label: "BINANCE · TRADIFI PERPETUAL"
-    backend: "okx_sqlite"
-    sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/binance_aapl_tokenized_20260713_20260813.db"
+    label: 代币化美股
+    symbol: AAPLUSDT
+    source_label: BINANCE · TRADIFI PERPETUAL
+    backend: okx_sqlite
+    sqlite_path: /Users/yy/Documents/data_indicator/aapl_indicator_web/data/binance_aapl_tokenized_20260713_20260813.db
     tables:
-      1m: "klines_1m"
-      5m: "klines_5m"
-    intervals: ["1m", "5m"]
-    date_start: "2026-07-13"
-    date_end: "2026-08-13"
+      1m: klines_1m
+      5m: klines_5m
+      15m: klines_15m
+    intervals:
+    - 1m
+    - 5m
+    - 15m
+    hidden_intervals:
+    - 1m
+    date_start: '2026-07-13'
+    date_end: '2026-08-13'
     max_points: 50000
   crypto:
-    label: "加密货币"
-    symbol: "BTC-USDT"
-    source_label: "OKX · CRYPTO · HISTORICAL CANDLES"
-    backend: "okx_sqlite"
-    sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/okx_btc_history_20260713_20260813.db"
+    label: 加密货币
+    symbol: Binance USDT 永续 · 大市值 10 币种
+    source_label: BINANCE FUTURES API · USDT 永续 · 1分钟原始K线聚合
+    backend: binance_futures_sqlite
+    sqlite_path: /Users/yy/Documents/data_indicator/aapl_indicator_web/data/binance_largecap_perpetual_20260901_20260910.sqlite
     tables:
-      1m: "klines_1m"
-      5m: "klines_5m"
-    intervals: ["1m", "5m"]
-    date_start: "2026-07-13"
-    date_end: "2026-08-13"
+      1m: klines_1m
+      5m: klines_5m
+      15m: klines_15m
+    intervals:
+    - 1m
+    - 5m
+    - 15m
+    date_start: '2026-09-01'
+    date_end: '2026-09-10'
     max_points: 50000
-  forex:
-    label: "外汇"
-    symbol: "XAUUSD"
-    source_label: "DUKASCOPY · FOREX · TICK"
-    backend: "local_sqlite"
-    sqlite_path: "/Users/yy/Documents/data_indicator/aapl_indicator_web/data/dukascopy_xauusd_20260713_20260813/dukascopy_xauusd_ticks.sqlite"
-    tables:
-      1m: "bars_1m"
-      5m: "bars_5m"
-    intervals: ["1m", "5m"]
-    date_start: "2026-07-13"
-    date_end: "2026-08-13"
-    max_points: 40000
-
+    default_contract_address: binance:btcusdt
 data:
-  default_board: "us_equity"
-  default_interval: "5m"
-
+  default_board: crypto
+  default_interval: 5m
 indicators:
+  chart_link:
+    enabled: true
+    intervals: [1m, 5m, 15m]
+    line_color: '#ff4545'
+    line_width: 2
+    area_color: 'rgba(255,69,69,0.10)'
+    minimum_visible_bars: 30
+    maximum_visible_bars: 700
   heiken_ashi:
-    ma1_method: "SMMA"
+    ma1_method: SMMA
     ma1_period: 6
-    ma2_method: "LWMA"
+    ma2_method: LWMA
     ma2_period: 2
   zigzag:
+    confirmation_mode: left_only
     price_tick_size: 0.01
     show_unconfirmed: true
     live_reversal_percent: 0.1
@@ -114,31 +90,78 @@ indicators:
         deviation: 5
         backstep: 3
       5m:
+        depth: 30
+        deviation: 5
+        backstep: 3
+      5m_display_fast:
         depth: 12
         deviation: 5
         backstep: 3
+      15m:
+        depth: 12
+        deviation: 5
+        backstep: 3
+      15m_display_fast:
+        depth: 5
+        deviation: 3
+        backstep: 3
+      20m:
+        depth: 12
+        deviation: 5
+        backstep: 3
+  token_profiles:
+    ACU:
+      label: ACU · 高噪音 Token 初始参数
+      sanqing:
+        basis_period: 21
+        atr_period: 21
+        atr_multiplier: 0.70
+      zigzag:
+        intervals:
+          1m:
+            depth: 45
+            deviation: 5
+            backstep: 5
+          1m_display_fast:
+            depth: 18
+            deviation: 5
+            backstep: 3
   parabolic_sar:
     step: 0.016
     maximum: 0.2
   sanqing:
-    basis_source: "typical_price"
-    basis_method: "EMA"
+    basis_source: typical_price
+    basis_method: EMA
     basis_period: 13
-    atr_method: "Wilder_RMA"
+    atr_method: Wilder_RMA
     atr_period: 14
     atr_multiplier: 0.45
-    breakout_reference: "previous_closed_bar"
+    breakout_reference: previous_closed_bar
   entry_filter:
-    timezone: "Asia/Shanghai"
-    max_move_from_parabolic_turn_percent: 0.30
+    timezone: Asia/Shanghai
+    max_move_from_parabolic_turn_percent: 0.3
+    max_entries_per_1m_zigzag_leg: 1
+    entry_direction: match_active_zigzag_leg
+    entry_timeframe: 1m
+    five_minute_entry_gate: required_same_direction
+    five_minute_zigzag_gate: required_same_direction
+    multi_timeframe_filter: false
+    pullback_pattern: three_stage_v_completion
+    execution_price: completion_bar_close
+    display_time: completion_bar_start
+    zigzag_direction_filter:
+      enabled: true
+      interval: 1m
+      mode: left_only_same_type_slope
+      long_requires: upward_slope
+      short_requires: downward_slope
     blackout_windows:
-      - start: "20:00"
-        end: "21:00"
-        reason: "20:30 重要数据发布前后半小时"
-
+    - start: '20:00'
+      end: '21:00'
+      reason: 20:30 重要数据发布前后半小时
 backtest:
   notional_per_trade_usd: 10.0
   fee_rate_per_side: 0.0
   slippage_rate_per_side: 0.0
-  volume_basis: "entry_plus_exit_notional"
-  open_position_valuation: "excluded"
+  volume_basis: entry_plus_exit_notional
+  open_position_valuation: excluded

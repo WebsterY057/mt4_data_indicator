@@ -1,0 +1,2 @@
+source: {name: 新浪财经 · 中金所5年国债期货主力连续 · 近期分钟线, symbol: TF0, provider_symbol: TF0, endpoint: https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20_data=/InnerFuturesNewService.getFewMinLine, source_interval_minutes: 1, timezone: Asia/Shanghai}
+output: {sqlite_path: data/cn_futures_tf0.sqlite, source_table: bars_1m, target_table: bars_5m}

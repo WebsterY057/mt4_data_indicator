@@ -252,6 +252,70 @@ def ashare_sqlite_bars(board: dict[str, Any], interval: str, date_start: str, da
             "rows": [dict(zip(columns, row)) for row in rows]}
 
 
+def futures_sqlite_bars(board: dict[str, Any], interval: str, date_start: str, date_end: str) -> dict[str, Any]:
+    table = board["tables"][interval]
+    uri = f"file:{Path(board['sqlite_path']).expanduser()}?mode=ro"
+    con = sqlite3.connect(uri, uri=True)
+    try:
+        params = [board["symbol"].split(" · ")[-1], date_start, date_end]
+        where = "symbol = ? AND substr(bar_time, 1, 10) BETWEEN ? AND ?"
+        total = int(con.execute(f"SELECT count(*) FROM {table} WHERE {where}", params).fetchone()[0])
+        rows = con.execute(
+            f"SELECT start_ts, end_ts, open, high, low, close, volume, 0 FROM {table} "
+            f"WHERE {where} ORDER BY start_ts", params
+        ).fetchall()
+    finally:
+        con.close()
+    columns = ["start_ts", "end_ts", "open", "high", "low", "close", "volume", "trade_count"]
+    return {"interval": interval, "date_start": date_start, "date_end": date_end,
+            "total_rows": total, "stride": 1, "columns": columns,
+            "rows": [dict(zip(columns, row)) for row in rows]}
+
+
+def binance_futures_sqlite_bars(board: dict[str, Any], interval: str, date_start: str, date_end: str,
+                                contract_address: str) -> dict[str, Any]:
+    table = board["tables"][interval]
+    max_points = max(100, min(int(board["max_points"]), 50000))
+    uri = f"file:{Path(board['sqlite_path']).expanduser()}?mode=ro"
+    con = sqlite3.connect(uri, uri=True)
+    try:
+        where = "contract_address = ? AND date(start_ts / 1000, 'unixepoch') BETWEEN ? AND ?"
+        params = [contract_address.lower(), date_start, date_end]
+        total = int(con.execute(f"SELECT count(*) FROM {table} WHERE {where}", params).fetchone()[0])
+        stride = max(1, (total + max_points - 1) // max_points)
+        rows = con.execute(
+            f"""WITH selected AS (
+                  SELECT *, row_number() OVER (ORDER BY start_ts) AS rn FROM {table} WHERE {where}
+                )
+                SELECT start_ts, end_ts, open, high, low, close, volume, trade_count FROM selected
+                WHERE (rn - 1) % ? = 0 OR rn = ? ORDER BY start_ts""", [*params, stride, total]
+        ).fetchall()
+    finally:
+        con.close()
+    columns = ["start_ts", "end_ts", "open", "high", "low", "close", "volume", "trade_count"]
+    return {"interval": interval, "date_start": date_start, "date_end": date_end,
+            "total_rows": total, "stride": stride, "columns": columns,
+            "rows": [dict(zip(columns, row)) for row in rows]}
+
+
+@app.get("/api/tokens")
+def tokens():
+    board_key = request.args.get("board", "crypto")
+    board = CONFIG["boards"].get(board_key)
+    if not board or board.get("backend") != "binance_futures_sqlite":
+        return jsonify({"ok": False, "error": "token list is unavailable for this board"}), 400
+    uri = f"file:{Path(board['sqlite_path']).expanduser()}?mode=ro"
+    try:
+        con = sqlite3.connect(uri, uri=True)
+        rows = con.execute("""SELECT contract_address, token, alpha_id, rustfs_symbol, binance_symbol, price_tick_size
+                              FROM contract_universe ORDER BY token, contract_address""").fetchall()
+        con.close()
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+    columns = ["contract_address", "token", "alpha_id", "rustfs_symbol", "binance_symbol", "price_tick_size"]
+    return jsonify({"ok": True, "tokens": [dict(zip(columns, row)) for row in rows]})
+
+
 @app.get("/api/bars")
 def bars():
     board_key = request.args.get("board", CONFIG["data"]["default_board"])
@@ -268,6 +332,19 @@ def bars():
     if board["backend"] == "ashare_sqlite":
         try:
             return jsonify({"ok": True, **ashare_sqlite_bars(board, interval, date_start, date_end)})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500
+    if board["backend"] == "futures_sqlite":
+        try:
+            return jsonify({"ok": True, **futures_sqlite_bars(board, interval, date_start, date_end)})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500
+    if board["backend"] == "binance_futures_sqlite":
+        contract_address = request.args.get("contract_address", board.get("default_contract_address", ""))
+        if not contract_address:
+            return jsonify({"ok": False, "error": "contract_address is required"}), 400
+        try:
+            return jsonify({"ok": True, **binance_futures_sqlite_bars(board, interval, date_start, date_end, contract_address)})
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 500
     if board["backend"] == "local_sqlite":

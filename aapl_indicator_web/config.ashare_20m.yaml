@@ -1,0 +1,21 @@
+source:
+  name: Sina CN MarketDataService
+  endpoint: https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20_data=/CN_MarketDataService.getKLineData
+  provider_symbol: sh600879
+  symbol: 600879.SH
+  adjustment: none
+  volume_unit: share
+  timezone: Asia/Shanghai
+  source_interval_minutes: 5
+  datalen: 1023
+output:
+  sqlite_path: data/aerospace_electronics_600879_1h_1y_1d_3y_20260815.db
+  source_table: bars_5m_source
+  target_table: bars_20m
+  target_interval: 20m
+  target_interval_minutes: 20
+sessions:
+- start: 09:30
+  end: '11:30'
+- start: '13:00'
+  end: '15:00'

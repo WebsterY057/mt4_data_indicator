@@ -1,0 +1,19 @@
+source:
+  fapi_base_url: https://fapi.binance.com/fapi/v1
+window:
+  # Binance kline event time; UTC calendar dates, both endpoints inclusive.
+  date_start: '2026-09-01'
+  date_end: '2026-09-10'
+output:
+  database: /Users/yy/Documents/data_indicator/aapl_indicator_web/data/binance_largecap_perpetual_20260901_20260910.sqlite
+assets:
+  - {token: BTC, instrument_id: binance:btcusdt}
+  - {token: ETH, instrument_id: binance:ethusdt}
+  - {token: BNB, instrument_id: binance:bnbusdt}
+  - {token: SOL, instrument_id: binance:solusdt}
+  - {token: XRP, instrument_id: binance:xrpusdt}
+  - {token: DOGE, instrument_id: binance:dogeusdt}
+  - {token: ADA, instrument_id: binance:adausdt}
+  - {token: TRX, instrument_id: binance:trxusdt}
+  - {token: AVAX, instrument_id: binance:avaxusdt}
+  - {token: LINK, instrument_id: binance:linkusdt}

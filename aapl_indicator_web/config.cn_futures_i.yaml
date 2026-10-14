@@ -1,0 +1,2 @@
+source: {name: 新浪财经 · 大商所铁矿石主力连续 · 近期分钟线, symbol: I0, provider_symbol: I0, endpoint: https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20_data=/InnerFuturesNewService.getFewMinLine, source_interval_minutes: 1, timezone: Asia/Shanghai}
+output: {sqlite_path: data/cn_futures_i0.sqlite, source_table: bars_1m, target_table: bars_5m}

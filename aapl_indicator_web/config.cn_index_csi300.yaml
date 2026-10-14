@@ -1,0 +1,11 @@
+source:
+  name: 东方财富 · 沪深300指数 · 近期分钟线
+  symbol: '000300'
+  provider_symbol: '1.000300'
+  endpoint: https://push2his.eastmoney.com/api/qt/stock/kline/get
+  max_source_rows: 1023
+  timezone: Asia/Shanghai
+output:
+  sqlite_path: data/cn_index_csi300.sqlite
+  source_table: bars_1m
+  target_table: bars_5m

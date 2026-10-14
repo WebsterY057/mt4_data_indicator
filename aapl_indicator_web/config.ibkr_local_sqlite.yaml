@@ -1,0 +1,27 @@
+input:
+  duckdb_path: "data/ibkr_us_equity_20260713_20260813.duckdb"
+  schema: "raw"
+  table: "ibkr_stock_us_l1_trade"
+  symbol: "AAPL"
+  date_start: "2026-07-13"
+  date_end: "2026-08-13"
+  event_time_column: "ts_utc"
+  price_column: "trade_price"
+  size_column: "trade_size"
+  volume_event_filter: "trigger_field = 'last_size'"
+
+output:
+  sqlite_path: "data/ibkr_aapl_20260713_20260813.sqlite"
+  raw_table: "l1_trade_raw"
+  bars_tables:
+    1m: "klines_1m"
+    5m: "klines_5m"
+    15m: "klines_15m"
+  batch_size: 50000
+
+aggregation:
+  timezone: "UTC"
+  intervals:
+    1m: "1 minute"
+    5m: "5 minutes"
+    15m: "15 minutes"
